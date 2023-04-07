@@ -32,7 +32,7 @@ local WaitingForPlayers = Class(Widget, function(self, owner, max_players)
 	for i = 1, max_players do
 		local portrait = PlayerAvatarPortrait()
 		portrait.frame:SetScale(.43)
-	    portrait._playerreadytext = portrait:AddChild(Text(CHATFONT_OUTLINE, 20, STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.PLAYER_VOTED_TO_FORCE_START, UICOLOURS.GOLD))
+	    portrait._playerreadytext = portrait:AddChild(Text(CHATFONT_OUTLINE, 20, STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.PLAYER_READY_TO_START, UICOLOURS.GOLD))
 		portrait._playerreadytext:SetPosition(0, -143)
 		portrait._playerreadytext:SetHAlign(ANCHOR_MIDDLE)
 
@@ -44,24 +44,16 @@ local WaitingForPlayers = Class(Widget, function(self, owner, max_players)
     self.list_root:SetPosition(-250, (max_players > 3 and (280/2) or 0) + 20)
 
 	local function playerready_checkbox_onclicked(widget)
-		if (#self.players < TheNet:GetServerMaxPlayers()) and not widget.votestart_warned then
-			TheFrontEnd:PushScreen(PopupDialogScreen(STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.VOTE_POPUP_TITLE, STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.VOTE_POPUP_BODY,
-				{
-					{text=STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.VOTE_POPUP_CONTINUE, cb = function() widget.votestart_warned = true TheFrontEnd:PopScreen() widget:onclick() end },
-					{text=STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.VOTE_POPUP_CANCEL, cb = function() TheFrontEnd:PopScreen() end}
-				}, nil, "medium", "dark_wide" ))
-		else
-			widget.checked = not widget.checked
-			widget:Disable()
-			widget:Refresh()
+		widget.checked = not widget.checked
+		widget:Disable()
+		widget:Refresh()
 
-			UserCommands.RunUserCommand("playerreadytostart", {ready="true"}, TheNet:GetClientTableForUser(TheNet:GetUserID()))
-			widget.timeout_task = widget.inst:DoTaskInTime(5, function() 
-				widget.checked = TheWorld.net ~= nil and TheWorld.net.components.worldcharacterselectlobby:IsPlayerReadyToStart(TheNet:GetUserID()) or false
-				widget:Enable()
-				widget:Refresh()
-			end)
-		end
+		UserCommands.RunUserCommand("playerreadytostart", {ready="true"}, TheNet:GetClientTableForUser(TheNet:GetUserID()))
+		widget.timeout_task = widget.inst:DoTaskInTime(5, function() 
+			widget.checked = TheWorld.net ~= nil and TheWorld.net.components.worldcharacterselectlobby:IsPlayerReadyToStart(TheNet:GetUserID()) or false
+			widget:Enable()
+			widget:Refresh()
+		end)
 	end
 
 	local playerready_checkbox = self:AddChild(TEMPLATES.LabelCheckbox(playerready_checkbox_onclicked, false, ""))
@@ -93,6 +85,17 @@ local WaitingForPlayers = Class(Widget, function(self, owner, max_players)
     spawndelaytext:SetPosition(0, -290)
     spawndelaytext:SetColour(UICOLOURS.GOLD)
     spawndelaytext:Hide()
+
+	self.admin_start_button = self:AddChild(TEMPLATES.StandardButton(function() UserCommands.RunUserCommand("forcestartgame", {}, TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) end, STRINGS.UI.LOBBYSCREEN.START, {200, 50}))
+	self.admin_start_button:SetPosition(300, -314)
+	if TheWorld.net.components.worldcharacterselectlobby.ADMIN_MODE == "ADMIN" 
+		and UserCommands.CanUserAccessCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) 
+		and UserCommands.CanUserStartCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) then
+		self.admin_start_button:Show()
+	else
+		self.admin_start_button:Hide()
+	end
+
 	
 	self:RefreshPlayersReady()
 	
@@ -206,7 +209,7 @@ function WaitingForPlayers:RefreshPlayersReady()
 	if TheWorld.net ~= nil and TheWorld.net.components.worldcharacterselectlobby ~= nil then
 		for i, widget in ipairs(self.player_listing) do
 			if widget.userid ~= nil and TheWorld.net.components.worldcharacterselectlobby:IsPlayerReadyToStart(widget.userid) then
-				widget._playerreadytext:SetString( self:IsServerFull() and STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.PLAYER_READY_TO_START or STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.PLAYER_VOTED_TO_FORCE_START)
+				widget._playerreadytext:SetString(STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.PLAYER_READY_TO_START)
      			widget._playerreadytext:Show()
 			else
      			widget._playerreadytext:Hide()
@@ -221,8 +224,9 @@ function WaitingForPlayers:RefreshPlayersReady()
 		end
 		self.playerready_checkbox:Disable()
 		self.playerready_checkbox:Hide()
+		self.admin_start_button:Hide()
 	else
-        self.playerready_checkbox:SetText(self:IsServerFull() and STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.LOCAL_PLAYER_READY_TO_START or subfmt(STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.LOCAL_PLAYER_VOTE_TO_START, {num=#self.players, max=TheNet:GetServerMaxPlayers()}))
+        self.playerready_checkbox:SetText(STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.LOCAL_PLAYER_READY_TO_START)
 		if not TheInput:ControllerAttached() then
 			self.playerready_checkbox:RecenterCheckbox()
 			self.playerready_checkbox:Show()

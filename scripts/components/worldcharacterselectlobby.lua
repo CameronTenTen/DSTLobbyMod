@@ -20,6 +20,10 @@ local COUNTDOWN_INACTIVE = 255
 --Public
 self.inst = inst
 
+-- various parts of the code need to access these config vars
+self.MIN_PLAYERS = 2
+self.ADMIN_MODE = "ALL"
+
 --Private
 local _world = TheWorld
 local _ismastersim = _world.ismastersim
@@ -161,6 +165,25 @@ local function StarTimer(time)
 	self.inst:StartWallUpdatingComponent(self)
 end
 
+-- used by the admin's "start" button
+AddUserCommand("forcestartgame", {
+	prettyname = nil, --default to STRINGS.UI.BUILTINCOMMANDS.RESCUE.PRETTYNAME
+	desc = nil, --default to STRINGS.UI.BUILTINCOMMANDS.RESCUE.DESC
+	permission = COMMAND_PERMISSION.ADMIN,
+	-- seems like slash commands dont work in the lobby screen :(
+	slash = true,
+	usermenu = false,
+	servermenu = false,
+	params = {},
+	vote = false,
+	canstartfn = function(command, caller, targetid)
+		return _countdowni:value() == COUNTDOWN_INACTIVE and not _lockedforshutdown:value()
+	end,
+	serverfn = function(params, caller)
+		StarTimer(COUNTDOWN_TIME)
+	end,
+})
+
 local function CountPlayersReadyToStart()
 	local count = 0
 	for i, v in ipairs(_players_ready_to_start) do
@@ -176,12 +199,32 @@ local function TryStartCountdown()
 		return
 	end
 
-    local clients = GetPlayersClientTable()
-	if CountPlayersReadyToStart() < #clients then
-		return
+-- case
+	local modeActions = {
+		["ALL"] = function()
+			local clients = GetPlayersClientTable()
+			if CountPlayersReadyToStart() < #clients or CountPlayersReadyToStart() < self.MIN_PLAYERS then
+				return
+			end
+			StarTimer(COUNTDOWN_TIME)
+		end,
+		["MIN"] = function()
+			local clients = GetPlayersClientTable()
+			if CountPlayersReadyToStart() < self.MIN_PLAYERS then
+				return
+			end
+			StarTimer(COUNTDOWN_TIME)
+		end,
+		["ADMIN"] = function()
+			-- Do nothing because admin start is triggered elsewhere
+		end,
+	}
+	local func = modeActions[self.ADMIN_MODE]
+	if (func) then
+		func()
+	else
+		print("Error: Unknown Mode: ", self.ADMIN_MODE)
 	end
-
-	StarTimer(COUNTDOWN_TIME)
 end
 
 local function OnRequestLobbyCharacter(world, data)
@@ -336,6 +379,11 @@ end
 
 function self:CanPlayersSpawn()
 	return _countdownf == 0
+end
+
+-- Simple wrapper of the local function to expose it as a public function
+function self:CountPlayersReadyToStart()
+	return CountPlayersReadyToStart()
 end
 
 --------------------------------------------------------------------------

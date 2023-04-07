@@ -174,7 +174,8 @@ local CharacterSelectPanel = Class(LobbyPanel, function(self, owner)
 	local CharacterButtonCtor = Class(CharacterButton, function(self, character, cbPortraitFocused, cbPortraitClicked)
 		CharacterButton._ctor(self, character, cbPortraitFocused, cbPortraitClicked)
 		self:SetScale(0.95)
-		self.face:SetScale(1.1)
+		-- I don't know why face is nil here? its only broken when moved to the mod?
+		-- self.face:SetScale(1.1)
 	end)
 
 	local function BuildCharacterDetailsWidget(char)
@@ -406,14 +407,36 @@ local LoadoutPanel = Class(LobbyPanel, function(self, owner)
 	end	
 end)
 
+function calcuateWaitingText(mode, readyCount, expectedCount, serverSize)
+	if mode == "ALL" then
+		return STRINGS.UI.LOBBYSCREEN.WAITING_FOR_PLAYERS_TITLE.." ("..subfmt(STRINGS.UI.LOBBYSCREEN.NUM_PLAYERS_FMT, {num = readyCount, max = math.max(expectedCount, serverSize)})..")"
+	elseif mode == "MIN" then
+		return STRINGS.UI.LOBBYSCREEN.WAITING_FOR_PLAYERS_TITLE.." ("..subfmt(STRINGS.UI.LOBBYSCREEN.NUM_PLAYERS_FMT, {num = readyCount, max = expectedCount})..")"
+	elseif mode == "ADMIN" then
+		return "Waiting For Admin"
+	end
+end
+
 local WaitingPanel = Class(LobbyPanel, function(self, owner)
     LobbyPanel._ctor(self, "WaitingPanel")
 
-	self.title = STRINGS.UI.LOBBYSCREEN.WAITING_FOR_PLAYERS_TITLE
+	self.title = calcuateWaitingText(TheWorld.net.components.worldcharacterselectlobby.ADMIN_MODE,
+	                                 TheWorld.net.components.worldcharacterselectlobby.CountPlayersReadyToStart(),
+	                                 TheWorld.net.components.worldcharacterselectlobby.MIN_PLAYERS,
+	                                 TheNet:GetServerMaxPlayers())
 
 	self.waiting_for_players = self:AddChild(WaitingForPlayers(self, TheNet:GetServerMaxPlayers()))
 	self.waiting_for_players:Refresh(true)
     self.focus_forward = self.waiting_for_players
+
+	self.waiting_for_players.inst:ListenForEvent("player_ready_to_start_dirty", function(net)
+		-- Update the "Waiting For Other Players" text with the player count each time the ready count changes
+		self.title = calcuateWaitingText(net.components.worldcharacterselectlobby.ADMIN_MODE,
+		                                 net.components.worldcharacterselectlobby.CountPlayersReadyToStart(),
+		                                 net.components.worldcharacterselectlobby.MIN_PLAYERS,
+		                                 TheNet:GetServerMaxPlayers())
+		owner.panel_title:SetString(self.title)
+	end, TheWorld.net)
 
 	function self:OnUpdate(dt)
 		if self.on_character_rest_cb then
