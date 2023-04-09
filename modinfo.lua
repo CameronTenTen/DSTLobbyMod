@@ -25,7 +25,7 @@ configuration_options =
 	{
 		name = "ADMIN_MODE",
 		label = "Starting Condition",
-		hover = "Configure how to decide when the game can start",
+		hover = "How to decide when the game can start",
 		options =
 		{
 			-- All players must be ready, and there must be more than the minimum number of players
@@ -44,4 +44,14 @@ configuration_options =
 		options = numbers,
 		default = 2
 	},
+	{
+		name = "LATE_JOIN",
+		label = "Allow Late Join",
+		hover = "Can new players join after the game has started",
+		options = {
+			{description = "Yes", data = true},
+			{description = "No", data = false},
+		},
+		default = true,
+	}
 }

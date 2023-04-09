@@ -12,6 +12,8 @@ AddPrefabPostInit("forest_network", function (inst)
 	inst:AddComponent("worldcharacterselectlobby")
 	local MIN_PLAYERS = GetModConfigData("MIN_PLAYERS")
 	local ADMIN_MODE = GetModConfigData("ADMIN_MODE")
+	local LATE_JOIN = GetModConfigData("LATE_JOIN")
 	inst.components.worldcharacterselectlobby.MIN_PLAYERS = MIN_PLAYERS
 	inst.components.worldcharacterselectlobby.ADMIN_MODE = ADMIN_MODE
+	inst.components.worldcharacterselectlobby.LATE_JOIN = LATE_JOIN
 end)

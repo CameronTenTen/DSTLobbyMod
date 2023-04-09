@@ -23,6 +23,7 @@ self.inst = inst
 -- various parts of the code need to access these config vars
 self.MIN_PLAYERS = 2
 self.ADMIN_MODE = "ALL"
+self.LATE_JOIN = true
 
 --Private
 local _world = TheWorld
@@ -159,7 +160,9 @@ local function StarTimer(time)
 	_countdownf = time
     _countdowni:set(math.ceil(time))
 
-	TheNet:SetAllowNewPlayersToConnect(false)
+	if not self.LATE_JOIN then
+		TheNet:SetAllowNewPlayersToConnect(false)
+	end
     TheNet:SetIsMatchStarting(true)
 	ClearAllPlayersReadyToStart()
 
@@ -442,7 +445,9 @@ if _ismastersim then function self:OnLoad(data)
 		if data.match_started then
 			_countdownf = 0
 			_countdowni:set(0)
-			inst:DoTaskInTime(0, function() TheNet:SetAllowNewPlayersToConnect(false) end)
+			if not self.LATE_JOIN then
+				inst:DoTaskInTime(0, function() TheNet:SetAllowNewPlayersToConnect(false) end)
+			end
 		end
 	end
 end end
