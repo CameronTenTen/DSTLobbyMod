@@ -85,17 +85,6 @@ local WaitingForPlayers = Class(Widget, function(self, owner, max_players)
     spawndelaytext:SetPosition(0, -290)
     spawndelaytext:SetColour(UICOLOURS.GOLD)
     spawndelaytext:Hide()
-
-	self.admin_start_button = self:AddChild(TEMPLATES.StandardButton(function() UserCommands.RunUserCommand("forcestartgame", {}, TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) end, STRINGS.UI.LOBBYSCREEN.START, {200, 50}))
-	self.admin_start_button:SetPosition(300, -314)
-	if TheWorld.net.components.worldcharacterselectlobby.ADMIN_MODE == "ADMIN" 
-		and UserCommands.CanUserAccessCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) 
-		and UserCommands.CanUserStartCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) then
-		self.admin_start_button:Show()
-	else
-		self.admin_start_button:Hide()
-	end
-
 	
 	self:RefreshPlayersReady()
 	
@@ -224,7 +213,6 @@ function WaitingForPlayers:RefreshPlayersReady()
 		end
 		self.playerready_checkbox:Disable()
 		self.playerready_checkbox:Hide()
-		self.admin_start_button:Hide()
 	else
         self.playerready_checkbox:SetText(STRINGS.UI.LOBBY_WAITING_FOR_PLAYERS_SCREEN.LOCAL_PLAYER_READY_TO_START)
 		if not TheInput:ControllerAttached() then

@@ -453,6 +453,16 @@ local WaitingPanel = Class(LobbyPanel, function(self, owner)
 		owner.panel_title:SetString(self.title)
 	end, TheWorld.net)
 
+	if TheWorld.net.components.worldcharacterselectlobby.ADMIN_MODE == "ADMIN"
+		and UserCommands.CanUserAccessCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) 
+		and UserCommands.CanUserStartCommand("forcestartgame", TheNet:GetClientTableForUser(TheNet:GetUserID()), nil) then
+		self.next_button_title = STRINGS.UI.LOBBYSCREEN.START
+	end
+
+	function self:OnNextButton()
+		UserCommands.RunUserCommand("forcestartgame", {}, TheNet:GetClientTableForUser(TheNet:GetUserID()), nil)
+	end
+
 	function self:OnUpdate(dt)
 		if self.on_character_rest_cb then
 			self.on_character_rest_cb(self)
