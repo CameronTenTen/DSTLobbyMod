@@ -314,7 +314,21 @@ local LoadoutPanel = Class(LobbyPanel, function(self, owner)
     self:SetPosition(-160, 0)
 
 	self.title = STRINGS.UI.COLLECTIONSCREEN.SKINS
-	self.next_button_title = GetGameModeProperty("lobbywaitforallplayers") and STRINGS.UI.LOBBYSCREEN.SELECT or STRINGS.UI.LOBBYSCREEN.START
+
+	-- After the game has started, we don't go to the next (waiting for players) screen
+	if TheWorld.net.components.worldcharacterselectlobby.HasGameStarted() then
+		self.next_button_title = STRINGS.UI.LOBBYSCREEN.START 
+	else
+		self.next_button_title = STRINGS.UI.LOBBYSCREEN.SELECT
+	end
+	self.inst:ListenForEvent("lobbyplayerspawndelay", function(world, data)
+		if data and data.time == 0 then
+			self.next_button_title = STRINGS.UI.LOBBYSCREEN.START
+		else
+			self.next_button_title = STRINGS.UI.LOBBYSCREEN.SELECT
+		end
+		owner.next_button:SetText(self.next_button_title)
+	end, TheWorld)
 
 	self.loadout = self:AddChild(LoadoutSelect(owner.profile, owner.lobbycharacter))
 
@@ -392,7 +406,8 @@ local LoadoutPanel = Class(LobbyPanel, function(self, owner)
             self.loadout:_SaveLoadout() --only save the loadout when it's not a random character
         end
 
-		if GetGameModeProperty("lobbywaitforallplayers") then
+		-- Depending on game start status either go to the waiting screen or join the game
+		if not TheWorld.net.components.worldcharacterselectlobby.HasGameStarted() then
 			if owner.lobbycharacter == "random" then
 				TheNet:SendLobbyCharacterRequestToServer("random")
 			else
@@ -580,28 +595,23 @@ local LobbyScreen = Class(Screen, function(self, profile, cb)
     end
 
 	self.panels = {}
-	
-	if GetGameModeProperty("lobbywaitforallplayers") then
-		if (Settings.match_results.wxp_data ~= nil and Settings.match_results.wxp_data[TheNet:GetUserID()] ~= nil) or Settings.match_results.mvp_cards then
-			table.insert(self.panels, {panelfn = WxpPanel})
-		end
 
-		local server_shutting_down = TheWorld ~= nil and TheWorld.net ~= nil and TheWorld.net.components.worldcharacterselectlobby ~= nil and TheWorld.net.components.worldcharacterselectlobby:IsServerLockedForShutdown()
-		if server_shutting_down then
-			table.insert(self.panels, {panelfn = ServerLockedPanel})
-		else
-			if TheNet:GetServerGameMode() == "lavaarena" then
-				table.insert(self.panels, {panelfn = LavaarenaFestivalBookPannel})
-			end
-			table.insert(self.panels, {panelfn = CharacterSelectPanel})
-			table.insert(self.panels, {panelfn = LoadoutPanel})
-			table.insert(self.panels, {panelfn = WaitingPanel})
+	if (Settings.match_results.wxp_data ~= nil and Settings.match_results.wxp_data[TheNet:GetUserID()] ~= nil) or Settings.match_results.mvp_cards then
+		table.insert(self.panels, {panelfn = WxpPanel})
+	end
+
+	local server_shutting_down = TheWorld ~= nil and TheWorld.net ~= nil and TheWorld.net.components.worldcharacterselectlobby ~= nil and TheWorld.net.components.worldcharacterselectlobby:IsServerLockedForShutdown()
+	if server_shutting_down then
+		table.insert(self.panels, {panelfn = ServerLockedPanel})
+	else
+		if TheNet:GetServerGameMode() == "lavaarena" then
+			table.insert(self.panels, {panelfn = LavaarenaFestivalBookPannel})
 		end
-	else 
 		table.insert(self.panels, {panelfn = CharacterSelectPanel})
 		table.insert(self.panels, {panelfn = LoadoutPanel})
+		table.insert(self.panels, {panelfn = WaitingPanel})
 	end
-	
+
     self.panel_title = self.root:AddChild(TEMPLATES.ScreenTitle_BesideLeftSideBar( "" ))
 	
 	self.back_button = self.root:AddChild(TEMPLATES.BackButton_BesideLeftSidebar(function() if self.panel.OnBackButton == nil or self.panel:OnBackButton() then self.back_button._onclick_goback() end end, "", nil))
@@ -616,15 +626,18 @@ local LobbyScreen = Class(Screen, function(self, profile, cb)
 
 	self:ToNextPanel(1)
 	
-	self.inst:ListenForEvent("lobbyplayerspawndelay", function(world, data) 
-			if data and data.active then
+	self.inst:ListenForEvent("lobbyplayerspawndelay", function(world, data)
+		-- if the player has selected a character, prevent them going back and spawn them in when the countdown ends
+		-- I feel there should be a better way of checking that the player has finished selecting a character
+		-- this seems to be the most reliable for now, would be nicer if something like `TheNet:GetLobbyCharacter()` existed
+		if data and data.active and self.panel.name == "WaitingPanel" then
 				self.back_button:Disable()
 				self.back_button:Hide()
 				if data.time == 0 then
 					StartGame(self)
 				end
-			end
-		end, TheWorld)
+		end
+	end, TheWorld)
 		
 		
 	-- dump the player stats on all the clients

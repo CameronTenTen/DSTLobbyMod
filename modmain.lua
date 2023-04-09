@@ -1,15 +1,5 @@
 local TEMPLATES = require "widgets/redux/templates"
 
--- TODO: since lobbyscreen.lua is part of the mod now, just remove gamemode property checks
-local OldGetGameModeProperty = GLOBAL.GetGameModeProperty
-GLOBAL.GetGameModeProperty = function(property)
-	if property == "lobbywaitforallplayers" then
-		return true
-	else
-		return OldGetGameModeProperty(property)
-	end
-end
-
 -- make sure lobby is added to TheNet for any gamemode
 -- I really tried to add the component similar to quagmire_network.lua, but generic net doesnt seem to have a hook for that?
 -- these didn't work

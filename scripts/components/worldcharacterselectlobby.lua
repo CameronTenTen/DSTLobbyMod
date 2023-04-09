@@ -144,6 +144,7 @@ end
 
 local function StarTimer(time)
 	print ("[WorldCharacterSelectLobby] Countdown started")
+	TheNet:Announce("Starting game in "..time.." seconds...")
 
 	local analytics = TheWorld.components.lavaarenaanalytics or TheWorld.components.quagmireanalytics
 	if analytics ~= nil then
@@ -302,6 +303,7 @@ local function OnCountdownDirty()
     if _ismastersim and _countdowni:value() == 0 then
         inst:StopWallUpdatingComponent(self)
         print("[WorldCharacterSelectLobby] Countdown finished")
+        TheNet:Announce("Game Started!")
 
         --Use regular update to poll for when to clear match starting flag
         inst:StartUpdatingComponent(self)
@@ -384,6 +386,12 @@ end
 -- Simple wrapper of the local function to expose it as a public function
 function self:CountPlayersReadyToStart()
 	return CountPlayersReadyToStart()
+end
+
+-- client will need to know if the game has started (e.g. so they go to the game instead of the lobby)
+-- similar to CanPlayersSpawn() but works clientside
+function self:HasGameStarted()
+	return _countdowni:value() == 0
 end
 
 --------------------------------------------------------------------------
