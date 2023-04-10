@@ -1,6 +1,8 @@
 name = "Pre-game lobby"
-description = "Prevents anyone from spawning before all players are ready. \n"..
-"Can also be controlled by an administrator."
+description = "Want all players to start a world at the same time? \n"..
+"Prevents anyone from spawning before all players are ready. \n"..
+"Can also be controlled by an administrator. \n"..
+"Or be set to require a minimum number of players. \n"
 author = "camerontenten"
 version = "0.1"
 forumthread = ""
@@ -8,14 +10,13 @@ api_version_dst = 10
 all_clients_require_mod = true
 client_only_mod = false
 dst_compatible = true
--- TODO: icon!
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
-server_filter_tags = {"Competition", "Scorer"}
+server_filter_tags = {"Lobby"}
 
 
 local numbers = {}
-for i = 1, 26 do
+for i = 1, 64 do
 	-- tostring() not available? hack it with concatenation
 	numbers[i] = {description = ""..i, data = i}
 end
