@@ -438,7 +438,7 @@ local WaitingPanel = Class(LobbyPanel, function(self, owner)
 	self.title = calcuateWaitingText(TheWorld.net.components.worldcharacterselectlobby.ADMIN_MODE,
 	                                 TheWorld.net.components.worldcharacterselectlobby.CountPlayersReadyToStart(),
 	                                 TheWorld.net.components.worldcharacterselectlobby.MIN_PLAYERS,
-	                                 TheNet:GetServerMaxPlayers())
+	                                 TheNet:GetPlayerCount())
 
 	self.waiting_for_players = self:AddChild(WaitingForPlayers(self, TheNet:GetServerMaxPlayers()))
 	self.waiting_for_players:Refresh(true)
@@ -449,7 +449,7 @@ local WaitingPanel = Class(LobbyPanel, function(self, owner)
 		self.title = calcuateWaitingText(net.components.worldcharacterselectlobby.ADMIN_MODE,
 		                                 net.components.worldcharacterselectlobby.CountPlayersReadyToStart(),
 		                                 net.components.worldcharacterselectlobby.MIN_PLAYERS,
-		                                 TheNet:GetServerMaxPlayers())
+		                                 TheNet:GetPlayerCount())
 		owner.panel_title:SetString(self.title)
 	end, TheWorld.net)
 

@@ -4,7 +4,7 @@ description = "Want all players to start a world at the same time? \n"..
 "Can also be controlled by an administrator. \n"..
 "Or be set to require a minimum number of players. \n"
 author = "camerontenten"
-version = "0.1"
+version = "0.2"
 forumthread = ""
 api_version_dst = 10
 all_clients_require_mod = true
