@@ -10,6 +10,7 @@ local CharacterButton = require "widgets/redux/characterbutton"
 local CharacterSelect = require "widgets/redux/characterselect"
 local WaitingForPlayers = require "widgets/waitingforplayers"
 local PopupDialogScreen = require "screens/redux/popupdialog"
+local UserCommands = require "usercommands"
 
 local LavaarenaBookWidget = require "widgets/redux/lavaarena_book"
 
